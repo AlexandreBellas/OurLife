@@ -13,15 +13,15 @@ def getCPF():
 def getData():
 	result = {}
 	result['batimentos'] = input("Batimentos: ")
-	result['oximetro'] = input("Oxigenio: ")
+	#result['oximetro'] = input("Oxigenio: ")
 	result['pressao'] = input("Pressao: ")
 	result['temperatura'] = input("Temperatura: ")
 
 	if result['batimentos'] != '-':
 		result['batimentos'] = int(result['batimentos'])
 
-	if result['oximetro'] != '-':
-		result['oximetro'] = int(result['oximetro'])
+	#if result['oximetro'] != '-':
+	#	result['oximetro'] = int(result['oximetro'])
 
 	#Gambiarra da pressao sistolica e diastolica
 	if result['pressao'] != '-':
@@ -87,6 +87,54 @@ def dataTreatment(CPF, placeCPF):
 	else:
 		print("Esse CPF ja esta cadastrado.")
 
+# calcula score baseado nos dados recebidos
+def calculateScore(scoreRange):
+	score = 0
+
+	if result['temperatura'] > 39:
+		score += 3
+		scoreRange[0] = 3
+	elif result['temperatura'] >= 38:
+		score += 1
+		scoreRange[0] = 1
+	elif result['temperatura'] < 35:
+		score += 2
+		scoreRange[0] = 2
+
+	if result['batimentos'] >= 130:
+		score += 3
+		scoreRange[1] = 3
+	elif result['batimentos'] < 40 or result['batimentos'] >= 110:
+		score += 2
+		scoreRange[1] = 2
+	elif result['batimentos'] <= 50 or result['batimentos'] >= 100:
+		score += 1
+		scoreRange[1] = 1
+
+	PAS, PAD = result['pressao'].split('/')
+	
+	if PAS < 70 or PAS > 159:
+		score += 3
+		scoreRange[2] = 3
+	elif PAS < 80 or PAS > 149:
+		score += 2
+		scoreRange[2] = 2
+	elif PAS < 90 or PAS > 139:
+		score += 1
+		scoreRange[2] = 1
+
+	if PAD >= 110:
+		score += 3
+		scoreRange[3] = 3
+	elif PAD >= 100 or PAD <= 45:
+		score += 2
+		scoreRange[3] = 2
+	elif PAD >= 90:
+		score += 1
+		scoreRange[3] = 1
+
+	return score
+
 fb = firebase.FirebaseApplication('https://babysanca-4f129.firebaseio.com', None)
 place = '/info'
 
@@ -100,3 +148,7 @@ while True:
 
 	dataTreatment(CPF, place)
 	getFirebase(place)
+
+	scoreRange = [0, 0, 0, 0] # 1-amarelo, 2-laranja, 3-vermelho / ordem: [temperatura, batimentos, PAS, PAD]
+	score = calculateScore
+	# score total e faixa de cada medida calculados!
