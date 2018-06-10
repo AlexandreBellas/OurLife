@@ -47,10 +47,10 @@ def getData():
 	msg_temperature = reader.readline().decode().strip()
 
 	result = {}    
-	result['batimentos'] = msg_hbeat
-	result['PAS'] = msg_pression_systolic
-	result['PAD'] = msg_pression_diastolic
-	result['temperatura'] = msg_temperature
+	result['batimentos'] = int(msg_hbeat)
+	result['PAS'] = int(msg_pression_systolic)
+	result['PAD'] = int(msg_pression_diastolic)
+	result['temperatura'] = float(msg_temperature)
     	return result
 
 
