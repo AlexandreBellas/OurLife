@@ -1,4 +1,5 @@
 from firebase import firebase
+import serial
 import json
 import request
 import os
@@ -13,25 +14,22 @@ def getCPF():
 def getData():
 	result = {}
 	result['batimentos'] = input("Batimentos: ")
-	#result['oximetro'] = input("Oxigenio: ")
 	result['PAS'] = input("Pressao PAS: ")
 	result['PAD'] = input("Pressao PAD: ")
-	#result['pas'], result['pad'] = input("Pressao: ")
 	result['temperatura'] = input("Temperatura: ")
 
 	if result['batimentos'] != '-':
 		result['batimentos'] = int(result['batimentos'])
 
-	#if result['oximetro'] != '-':
-	#	result['oximetro'] = int(result['oximetro'])
+	if result['PAS'] != '-':
+		result['PAS'] = int(result['PAS'])
 
-	#Gambiarra da pressao sistolica e diastolica
 	if result['PAS'] != '-' and result['PAD'] != '-':
 		result['PAS'] = int(result['PAS'])
 		result['PAD'] = int(result['PAD'])
 
 	if result['temperatura'] != '-':
-		result['temperatura'] = int(result['temperatura'])
+		result['temperatura'] = float(result['temperatura'])
 
 	return result
 
@@ -65,7 +63,7 @@ def verifyRepetition(key, path):
 	result = fb.get(path, None)
 
 	for i, v in result.items():
-		if v == key:
+		if int(v) == key:
 			return False
 
 	return True
@@ -90,8 +88,10 @@ def dataTreatment(CPF, placeCPF):
 	else:
 		print("Esse CPF ja esta cadastrado.")
 
+	return data
+
 # calcula score baseado nos dados recebidos
-def calculateScore(scoreRange):
+def calculateScore(scoreRange, result):
 	score = 0
 
 	if result['batimentos'] >= 130:
@@ -103,7 +103,7 @@ def calculateScore(scoreRange):
 	elif result['batimentos'] <= 50 or result['batimentos'] >= 100:
 		score += 1
 		scoreRange[1] = 1
-	
+
 	if result['PAS'] < 70 or result['PAS'] > 159:
 		score += 3
 		scoreRange[2] = 3
@@ -138,6 +138,8 @@ def calculateScore(scoreRange):
 
 fb = firebase.FirebaseApplication('https://babysanca-4f129.firebaseio.com', None)
 place = '/info'
+device = '/dev/ttyUSB0'
+data = {}
 
 while True:
 	while True:
@@ -147,9 +149,10 @@ while True:
 		else:
 			break
 
-	dataTreatment(CPF, place)
+	data = dataTreatment(CPF, place)
 	getFirebase(place)
 
 	scoreRange = [0, 0, 0, 0] # 1-amarelo, 2-laranja, 3-vermelho / ordem: [temperatura, batimentos, PAS, PAD]
-	score = calculateScore
+	score = calculateScore(scoreRange, data)
+	print("O score foi " + str(score) + ".")
 	# score total e faixa de cada medida calculados!
