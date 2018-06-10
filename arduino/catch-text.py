@@ -1,23 +1,10 @@
 import re
 import serial
 import random
-import matplotlib.pyplot as plt
 
 # Serial Start
 reader = serial.Serial('/dev/ttyACM0', 9600)
 print('> Start Arduino Reader')
-
-# Data Plot
-x = []
-y = []
-cx = 0
-limx = 100
-# Plot Heart Beat
-plt.ion()
-axes = plt.gca()
-axes.set_ylim(0, 200)
-line, = axes.plot(x, y, 'r-')
-plt.show()
 
 def get_operation(msg):
     msg_split = msg.strip().strip('\\r').split(': ')
@@ -43,22 +30,9 @@ def get_save(reader):
 while True:
     msg = reader.readline().decode()
     op, msg_split = get_operation(msg)
-    if op != 'save' and op != 'heart-beat':
+    if op != 'save':
         val = get_values(msg_split[1])
         print(op, val)
-    elif op == 'heart-beat':
-        num = get_values(msg_split[1])[0]
-        num = num - random.randint(0, int(num/2)) if (cx % 7 == 0) else num;
-        num = num + random.randint(0, int(num / 2)) if (cx % 11 == 0) else num;
-        x.append(cx)
-        y.append(num)
-        cx += 1
-        line.set_ydata(y)
-        line.set_xdata(x)
-        xmin = max(0, (cx - limx))
-        axes.set_xlim(xmin, xmin + (limx + 1))
-        plt.draw()
-        plt.pause(0.1)
     else:
         print('> save')
         get_save(reader)
