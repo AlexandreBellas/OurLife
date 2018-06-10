@@ -1,4 +1,5 @@
 from firebase import firebase
+import serial
 import json
 import request
 import os
@@ -13,22 +14,21 @@ def getCPF():
 def getData():
 	result = {}
 	result['batimentos'] = input("Batimentos: ")
-	#result['oximetro'] = input("Oxigenio: ")
-	result['pressao'] = input("Pressao: ")
+	result['PAS'] = input("Pressao PAS: ")
+	result['PAD'] = input("Pressao PAD: ")
 	result['temperatura'] = input("Temperatura: ")
 
 	if result['batimentos'] != '-':
 		result['batimentos'] = int(result['batimentos'])
 
-	#if result['oximetro'] != '-':
-	#	result['oximetro'] = int(result['oximetro'])
+	if result['PAS'] != '-':
+		result['PAS'] = int(result['PAS'])
 
-	#Gambiarra da pressao sistolica e diastolica
-	if result['pressao'] != '-':
-		result['pressao'] = str(result['pressao'] + "/" + str(int(result['pressao'])-30))
+	if result['PAD'] != '-':
+		result['PAD'] = int(result['PAD'])
 
 	if result['temperatura'] != '-':
-		result['temperatura'] = int(result['temperatura'])
+		result['temperatura'] = float(result['temperatura'])
 
 	return result
 
@@ -62,7 +62,7 @@ def verifyRepetition(key, path):
 	result = fb.get(path, None)
 
 	for i, v in result.items():
-		if v == key:
+		if int(v) == key:
 			return False
 
 	return True
@@ -87,8 +87,10 @@ def dataTreatment(CPF, placeCPF):
 	else:
 		print("Esse CPF ja esta cadastrado.")
 
+	return data
+
 # calcula score baseado nos dados recebidos
-def calculateScore(scoreRange):
+def calculateScore(scoreRange, result):
 	score = 0
 
 	if result['temperatura'] > 39:
@@ -111,25 +113,23 @@ def calculateScore(scoreRange):
 		score += 1
 		scoreRange[1] = 1
 
-	PAS, PAD = result['pressao'].split('/')
-	
-	if PAS < 70 or PAS > 159:
+	if result['PAS'] < 70 or result['PAS'] > 159:
 		score += 3
 		scoreRange[2] = 3
-	elif PAS < 80 or PAS > 149:
+	elif result['PAS'] < 80 or result['PAS'] > 149:
 		score += 2
 		scoreRange[2] = 2
-	elif PAS < 90 or PAS > 139:
+	elif result['PAS'] < 90 or result['PAS'] > 139:
 		score += 1
 		scoreRange[2] = 1
 
-	if PAD >= 110:
+	if result['PAD'] >= 110:
 		score += 3
 		scoreRange[3] = 3
-	elif PAD >= 100 or PAD <= 45:
+	elif result['PAD'] >= 100 or result['PAD'] <= 45:
 		score += 2
 		scoreRange[3] = 2
-	elif PAD >= 90:
+	elif result['PAD'] >= 90:
 		score += 1
 		scoreRange[3] = 1
 
@@ -137,6 +137,8 @@ def calculateScore(scoreRange):
 
 fb = firebase.FirebaseApplication('https://babysanca-4f129.firebaseio.com', None)
 place = '/info'
+device = '/dev/ttyUSB0'
+data = {}
 
 while True:
 	while True:
@@ -146,9 +148,10 @@ while True:
 		else:
 			break
 
-	dataTreatment(CPF, place)
+	data = dataTreatment(CPF, place)
 	getFirebase(place)
 
 	scoreRange = [0, 0, 0, 0] # 1-amarelo, 2-laranja, 3-vermelho / ordem: [temperatura, batimentos, PAS, PAD]
-	score = calculateScore
+	score = calculateScore(scoreRange, data)
+	print("O score foi " + str(score) + ".")
 	# score total e faixa de cada medida calculados!
