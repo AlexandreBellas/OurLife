@@ -14,7 +14,9 @@ def getData():
 	result = {}
 	result['batimentos'] = input("Batimentos: ")
 	#result['oximetro'] = input("Oxigenio: ")
-	result['pressao'] = input("Pressao: ")
+	result['PAS'] = input("Pressao PAS: ")
+	result['PAD'] = input("Pressao PAD: ")
+	#result['pas'], result['pad'] = input("Pressao: ")
 	result['temperatura'] = input("Temperatura: ")
 
 	if result['batimentos'] != '-':
@@ -24,8 +26,9 @@ def getData():
 	#	result['oximetro'] = int(result['oximetro'])
 
 	#Gambiarra da pressao sistolica e diastolica
-	if result['pressao'] != '-':
-		result['pressao'] = str(result['pressao'] + "/" + str(int(result['pressao'])-30))
+	if result['PAS'] != '-' and result['PAD'] != '-':
+		result['PAS'] = int(result['PAS'])
+		result['PAD'] = int(result['PAD'])
 
 	if result['temperatura'] != '-':
 		result['temperatura'] = int(result['temperatura'])
@@ -91,16 +94,6 @@ def dataTreatment(CPF, placeCPF):
 def calculateScore(scoreRange):
 	score = 0
 
-	if result['temperatura'] > 39:
-		score += 3
-		scoreRange[0] = 3
-	elif result['temperatura'] >= 38:
-		score += 1
-		scoreRange[0] = 1
-	elif result['temperatura'] < 35:
-		score += 2
-		scoreRange[0] = 2
-
 	if result['batimentos'] >= 130:
 		score += 3
 		scoreRange[1] = 3
@@ -110,28 +103,36 @@ def calculateScore(scoreRange):
 	elif result['batimentos'] <= 50 or result['batimentos'] >= 100:
 		score += 1
 		scoreRange[1] = 1
-
-	PAS, PAD = result['pressao'].split('/')
 	
-	if PAS < 70 or PAS > 159:
+	if result['PAS'] < 70 or result['PAS'] > 159:
 		score += 3
 		scoreRange[2] = 3
-	elif PAS < 80 or PAS > 149:
+	elif result['PAS'] < 80 or result['PAS'] > 149:
 		score += 2
 		scoreRange[2] = 2
-	elif PAS < 90 or PAS > 139:
+	elif result['PAS'] < 90 or result['PAS'] > 139:
 		score += 1
 		scoreRange[2] = 1
 
-	if PAD >= 110:
+	if result['PAD'] >= 110:
 		score += 3
 		scoreRange[3] = 3
-	elif PAD >= 100 or PAD <= 45:
+	elif result['PAD'] >= 100 or result['PAD'] <= 45:
 		score += 2
 		scoreRange[3] = 2
-	elif PAD >= 90:
+	elif result['PAD'] >= 90:
 		score += 1
 		scoreRange[3] = 1
+
+	if result['temperatura'] > 39:
+		score += 3
+		scoreRange[0] = 3
+	elif result['temperatura'] >= 38:
+		score += 1
+		scoreRange[0] = 1
+	elif result['temperatura'] < 35:
+		score += 2
+		scoreRange[0] = 2		
 
 	return score
 
