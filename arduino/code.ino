@@ -9,23 +9,49 @@ int button_temperature = 4;
 int button_save = 5;
 
 // Outputs
-int led_hbeat = 7;
+int led_red = 9;
+int led_green = 10;
+int led_blue = 11;
 
 // Rand
 int seed_rand = 0;
 int min_rand = 0;
-int max_rand = 9;
+int max_rand = 8;
+
+// Brightness
+int min_brightness = 10;
+int max_brightness = 200;
 
 // Global - Save
-float global_hbeat = -1;
-float global_pression_systolic = -1;
-float global_pression_diastolic = -1;
+int global_hbeat = -1;
+int global_pression_systolic = -1;
+int global_pression_diastolic = -1;
 float global_temperature = -1;
 bool push_hbeat = false;
 bool push_pression = false;
 bool push_temperature = false;
 bool push_save = false;
 
+/* -------------------------------- */
+/* Led RGB */
+int brightness(int min_value, int max_value, int value){
+  return map(value, min_value, max_value, min_brightness, max_brightness);
+}
+
+void led_reset(){
+  analogWrite(led_red, min_brightness);
+  analogWrite(led_green, min_brightness);
+  analogWrite(led_blue, min_brightness);
+}
+
+void led_rgb(int red, int green, int blue){
+  digitalWrite(led_red, red);
+  digitalWrite(led_green, green);
+  digitalWrite(led_blue, blue);
+}
+
+/* -------------------------------- */
+/* Setup */
 void setup() {
   // Setup ports
   pinMode(input_hbeat, INPUT);
@@ -35,33 +61,32 @@ void setup() {
   pinMode(button_pression, INPUT);
   pinMode(button_temperature, INPUT);
   pinMode(button_save, INPUT);
-  pinMode(led_hbeat, OUTPUT);
+  
+  pinMode(led_red, OUTPUT);
+  pinMode(led_green, OUTPUT);
+  pinMode(led_blue, OUTPUT);
   // Utils
   Serial.begin(9600);
   randomSeed(analogRead(seed_rand));
+  //led_rgb(, min_brightness, min_brightness);
+  led_reset();
 }
 
 /* -------------------------------- */
 /* Heart Beat */
-void beat(int led, int t){
-  digitalWrite(led, HIGH);
-  delay(t);
-  digitalWrite(led, LOW);
-  delay(t);
-}
-
 void heart_beat(){
   // Read
   int read_hbeat = analogRead(input_hbeat);
   int hbeat_adjusted = map(read_hbeat, 0, 1023, 30, 130) - random(min_rand, max_rand);
   global_hbeat = hbeat_adjusted;
   // Print
-  Serial.print("Heart Beat: ");
+  Serial.print("heart-beat: ");
   Serial.print(hbeat_adjusted);
   Serial.println(" bpm");
   // Beat Lead
-  int time_hbeat = map(read_hbeat, 0, 1023, 1000, 50);
-  beat(led_hbeat, time_hbeat);
+  int time_hbeat = map(read_hbeat, 0, 1023, 800, 20);
+  //beat(led_hbeat, time_hbeat);
+  led_rgb(HIGH, 0, 0);
 }
 
 /* -------------------------------- */
@@ -73,12 +98,13 @@ void pression(){
   int read_pression = analogRead(input_pression);
   int pression_adjusted = map(read_pression, 0, 1023, 60, 150) - random(min_rand, max_rand);
   global_pression_systolic = pression_adjusted;
-  global_pression_diastolic = (pression_adjusted - 33 - random(min_rand, max_rand));
-  Serial.print("Blood Pressure: ");
+  global_pression_diastolic = (pression_adjusted - 34 - random(min_rand, max_rand));
+  Serial.print("blood-pressure: ");
   Serial.print(pression_adjusted);
   Serial.print(", ");
   Serial.print(global_pression_diastolic);
-  Serial.println(" mmHg");  
+  Serial.println(" mmHg");
+  led_rgb(0, HIGH, 0);
 }
 
 /* -------------------------------- */
@@ -90,9 +116,11 @@ void temperature(){
   float temp = ((volt - 0.5) * 100);
   global_temperature = temp;
   // Print
-  Serial.print("Temperature: ");
+  Serial.print("temperature: ");
   Serial.print(temp);
   Serial.println(" C");
+  int b = brightness(15, 45, temp);
+  led_rgb(0, 0, HIGH);
 }
 
 /* -------------------------------- */
@@ -105,11 +133,12 @@ void save(){
   String msg_temperature = (global_temperature == -1) ? "-" : String(global_temperature);
   global_hbeat = global_pression_systolic = global_pression_diastolic = global_temperature = -1;
 
-  Serial.println("Save");
+  Serial.println("save");
   Serial.println(msg_hbeat);
   Serial.println(msg_pression_systolic);
   Serial.println(msg_pression_diastolic);
   Serial.println(msg_temperature);
+  led_reset();
 }
 /* -------------------------------- */
 /* Loop */
